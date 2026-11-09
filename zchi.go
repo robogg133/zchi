@@ -18,17 +18,20 @@ func Logger(logger zerolog.Logger) func(next http.Handler) http.Handler {
 					logger.Error().Interface("recover", r).Bytes("stack", debug.Stack()).Msg("incoming_request_panic")
 					ww.WriteHeader(http.StatusInternalServerError)
 				}
-				logger.Info().Fields(map[string]interface{}{
-					"remote_addr": r.RemoteAddr,
-					"path":        r.URL.Path,
-					"proto":       r.Proto,
-					"method":      r.Method,
-					"user_agent":  r.UserAgent(),
-					"status":      http.StatusText(ww.Status()),
-					"status_code": ww.Status(),
-					"bytes_in":    r.ContentLength,
-					"bytes_out":   ww.BytesWritten(),
-				}).Msg("incoming_request")
+				l := logger.Info().
+					Str("remote_addr", r.RemoteAddr).
+					Str("path", r.URL.Path).
+					Str("proto", r.Proto).
+					Str("method", r.Method).
+					Str("user_agent", r.UserAgent()).
+					Int("status_code", ww.Status()).
+					Int64("bytes_in", r.ContentLength).
+					Int("bytes_out", ww.BytesWritten())
+				if id := middleware.GetReqID(r.Context()); id != "" {
+					l.Str("request_id", id)
+				}
+
+				l.Msg("incoming_request")
 			}()
 			next.ServeHTTP(ww, r)
 		}
