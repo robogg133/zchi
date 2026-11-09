@@ -28,7 +28,7 @@ func Logger(logger zerolog.Logger) func(next http.Handler) http.Handler {
 					Int64("bytes_in", r.ContentLength).
 					Int("bytes_out", ww.BytesWritten())
 				if id := middleware.GetReqID(r.Context()); id != "" {
-					l.Str("request_id", id)
+					l = l.Str("request_id", id)
 				}
 
 				l.Msg("incoming_request")
